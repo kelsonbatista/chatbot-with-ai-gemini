@@ -8,9 +8,7 @@ model = genai.GenerativeModel("gemini-1.5-flash")
 
 chat = model.start_chat()
 
-# response = chat.send_message("Hello, how are you?")
-
-# print(response.text)
+chat.send_message("Você é um consultor de projetos. Se limite a responder coisas sobremente sobre o projeto.")
 
 def gradio_wrapper(message, _history):
   response = chat.send_message(message)
