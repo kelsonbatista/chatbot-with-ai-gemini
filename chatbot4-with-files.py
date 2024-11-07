@@ -17,6 +17,14 @@ model = genai.GenerativeModel("gemini-1.5-flash", system_instruction=initial_pro
 
 chat = model.start_chat()
 
+def assemble_prompt(message):
+  text = message["text"]  
+  files = message["files"]
+  uploaded_files = upload_files(files) if files else None
+  prompt = [text]
+  prompt.extend(uploaded_files)
+  return prompt
+
 def error_handling(e):
   response = chat.send_message(
     f"O usuário te usando te deu um arquivo para você ler e obteve o erro: {e}."
@@ -31,10 +39,7 @@ def upload_files(files):
   
   if (files):
     for file in files:
-      try:
-        uploaded_file = genai.upload_file(file)
-      except Exception as e:
-        error_handling(e)
+      uploaded_file = genai.upload_file(file)
       
       while uploaded_file.state.name == "PROCESSING": # aguarda o arquivo ser processado
         time.sleep(3)
@@ -44,11 +49,7 @@ def upload_files(files):
       return uploaded_files
 
 def gradio_wrapper(message, _history):
-  text = message["text"]  
-  files = message["files"]
-  uploaded_files = upload_files(files) if files else None
-  prompt = [text]
-  prompt.extend(uploaded_files)
+  prompt = assemble_prompt(message)
   
   try:
     response = chat.send_message(prompt)
