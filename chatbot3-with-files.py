@@ -2,6 +2,7 @@ import os
 
 import google.generativeai as genai
 import gradio
+import time
 
 genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
@@ -29,7 +30,12 @@ def gradio_wrapper(message, _history):
   if (message["files"]):
     for file in message["files"]:
       uploaded_file = genai.upload_file(file)
-      # import pdb; pdb.set_trace()
+      #import pdb; pdb.set_trace()
+      
+      while uploaded_file.state.name == "PROCESSING": # aguarda o arquivo ser processado
+        time.sleep(3)
+        uploaded_file = genai.get_file(uploaded_file.name)
+        
       uploaded_files.append(uploaded_file)
   
   prompt = [text]
