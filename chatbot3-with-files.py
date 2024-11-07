@@ -3,6 +3,7 @@ import os
 import google.generativeai as genai
 import gradio
 import time
+from google.api_core.exceptions import InvalidArgument
 
 genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
@@ -29,7 +30,16 @@ def gradio_wrapper(message, _history):
   
   if (message["files"]):
     for file in message["files"]:
-      uploaded_file = genai.upload_file(file)
+      try:
+        uploaded_file = genai.upload_file(file)
+      except Exception as e:
+        response = chat.send_message(
+          f"O usuário te usando te deu um arquivo para você ler e obteve o erro: {e}."
+          "Explique o que houve e dizer quais tipos de arquivo você suporta."
+          "Assuma que a pessoa não saiba programação e que não quer ver o erro técnico original."
+          "Explique de forma simples e concisa"
+        )
+        return response.text
       #import pdb; pdb.set_trace()
       
       while uploaded_file.state.name == "PROCESSING": # aguarda o arquivo ser processado
@@ -41,7 +51,16 @@ def gradio_wrapper(message, _history):
   prompt = [text]
   prompt.extend(uploaded_files)
   
-  response = chat.send_message(prompt)
+  try:
+    response = chat.send_message(prompt)
+  except InvalidArgument as e:
+    response = chat.send_message(
+      f"O usuário te usando te deu um arquivo para você ler e obteve o erro: {e}."
+      "Explique o que houve e dizer quais tipos de arquivo você suporta."
+      "Assuma que a pessoa não saiba programação e que não quer ver o erro técnico original."
+      "Explique de forma simples e concisa"
+    )
+    
   return response.text
 
 chatInterface = gradio.ChatInterface(fn=gradio_wrapper, multimodal=True, title="Chatbot com suporte a arquivos")
